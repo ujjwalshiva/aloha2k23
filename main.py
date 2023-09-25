@@ -169,8 +169,9 @@ if menu == "View Student":
 if menu == "Reset Student":
     st.write("This is the Reset Student page.")
     roll = st.text_input("Last 2 digits of Roll Number")
+    password = st.text_input(":red[Password for Authentication:]")
     resetCheckInBtn = st.button("Reset Check In")
-    if roll and resetCheckInBtn:
+    if roll and resetCheckInBtn and (password == st.secrets['PASSKEY']):
         resetStudent(db, roll)
 
 if menu == "All Data":
