@@ -19,7 +19,7 @@ ist = pytz.timezone("Asia/Kolkata")
 st.header("Aloha 2K23 Event Dashboard")
 
 menu = st.sidebar.selectbox(
-    "Menu", ["Home", "Check In", "Add Student", "View Student", "Reset Student", "All Data"])
+    "Menu", ["🏠 Home", "✅ Check In", "🧑🏻 Add Student", "💻 View Student", "🔄️ Reset Student", "📃 Checked In Data", "📃 Not Checked In Data", "📃 All Data"])
 
 def notCheckedInCount(db):
     query = {'lastCheckIn': 'Not Checked In'}
@@ -99,34 +99,36 @@ def viewStudent(db, roll):
     else:
         return "Student :red[**not available**] in Database"
     
-def resetStudent(db, roll):
+def resetStudent(db, roll, password):
     digits = roll.upper().strip()
     query = {'roll': {'$regex': f'.*{digits}$'}}
     result = db.find_one(query)
-
-    if result is not None:
-        name = result["name"]
-        fullRoll = "23951A67"+digits
-        if result["lastCheckIn"] != "Not Checked In":
-            jsonData = {
-                '$set': {
-                    'lastCheckIn': "Not Checked In",
-                    'entryPoint': "Nil"
-                }
-            }
-            updateQuery = db.update_one(query, jsonData)
-            if updateQuery.matched_count > 0:
-                return st.success(f"**{name} - {fullRoll}** check in details have been **RESET**")
-            else:
-                return st.warning("Try Again")
-        else:
-            return st.error(f'**{name}** has not checked in yet!')
+    if password not in st.secrets['PASSKEY']:
+        return st.error("Enter Valid Password")
     else:
-        return st.error("Student :red[**not available**] in Database")
+        if result is not None:
+            name = result["name"]
+            fullRoll = "23951A67"+digits
+            if result["lastCheckIn"] != "Not Checked In":
+                jsonData = {
+                    '$set': {
+                        'lastCheckIn': "Not Checked In",
+                        'entryPoint': "Nil"
+                    }
+                }
+                updateQuery = db.update_one(query, jsonData)
+                if updateQuery.matched_count > 0:
+                    return st.success(f"**{name} - {fullRoll}** check in details have been **RESET**")
+                else:
+                    return st.warning("Try Again")
+            else:
+                return st.error(f'**{name}** has not checked in yet!')
+        else:
+            return st.error("Student :red[**not available**] in Database")
 
 
 
-if menu == "Home":
+if menu == "🏠 Home":
     st.image('Aloha.jpg')
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Students Registered", f"{totalDbCount(db)}", "Online")
@@ -136,7 +138,7 @@ if menu == "Home":
                 f"{totalDbCount(db) - checkedInCount(db)}")
 
 
-if menu == "Check In":
+if menu == "✅ Check In":
     st.write("This is the Check In page.")
     roll = st.text_input("Last 2 digits of Roll Number")
     entryPoint = st.selectbox("Entry Point", ["1", "2"])
@@ -145,7 +147,7 @@ if menu == "Check In":
         checkInStudent(db, roll, entryPoint)
 
 
-if menu == "Add Student":
+if menu == "🧑🏻 Add Student":
     st.write("This is the Add Student page.")
     name = st.text_input('Name of Student')
     roll = st.text_input("Last 2 digits of Roll Number")
@@ -158,7 +160,7 @@ if menu == "Add Student":
         st.warning(addStudent(db, name, roll, phone, section, payment))
 
 
-if menu == "View Student":
+if menu == "💻 View Student":
     st.write("This is the View Student page.")
 
     roll = st.text_input("Last 2 Digits of Roll Number:")
@@ -166,15 +168,27 @@ if menu == "View Student":
     if roll and viewStudentBtn:
         st.write(viewStudent(db, roll))
 
-if menu == "Reset Student":
+if menu == "🔄️ Reset Student":
     st.write("This is the Reset Student page.")
     roll = st.text_input("Last 2 digits of Roll Number")
-    password = st.text_input(":red[Password for Authentication:]")
+    password = st.text_input(":red[Password for Authentication:]",type="password")
     resetCheckInBtn = st.button("Reset Check In")
-    if roll and resetCheckInBtn and (password == st.secrets['PASSKEY']):
-        resetStudent(db, roll)
+    if roll and resetCheckInBtn:
+        resetStudent(db, roll, password)
 
-if menu == "All Data":
+if menu == "📃 Checked In Data":
+    df = pd.DataFrame(
+        list(db.find({"lastCheckIn": {"$ne": "Not Checked In"}})))
+    df = df.drop('_id', axis=1)
+    st.dataframe(df)
+
+if menu == "📃 Not Checked In Data":
+    df = pd.DataFrame(
+        list(db.find({'lastCheckIn': 'Not Checked In'})))
+    df = df.drop('_id', axis=1)
+    st.dataframe(df)
+
+if menu == "📃 All Data":
     df = pd.DataFrame(list(db.find({})))
     df = df.drop('_id', axis=1)
     st.dataframe(df)
