@@ -179,14 +179,20 @@ if menu == "🔄️ Reset Student":
 if menu == "📃 Checked In Data":
     df = pd.DataFrame(
         list(db.find({"lastCheckIn": {"$ne": "Not Checked In"}})))
-    df = df.drop('_id', axis=1)
-    st.dataframe(df)
+    if df.shape[0] == 0:
+        st.error("No Check Ins done yet. Still waiting :)")
+    else:
+        df = df.drop('_id', axis=1)
+        st.dataframe(df)
 
 if menu == "📃 Not Checked In Data":
     df = pd.DataFrame(
         list(db.find({'lastCheckIn': 'Not Checked In'})))
-    df = df.drop('_id', axis=1)
-    st.dataframe(df)
+    if df.shape[0] == 0:
+        st.success("Looks like all have checked in!")
+    else:
+        df = df.drop('_id', axis=1)
+        st.dataframe(df)
 
 if menu == "📃 All Data":
     df = pd.DataFrame(list(db.find({})))
