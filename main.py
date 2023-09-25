@@ -8,7 +8,7 @@ from pymongo.mongo_client import MongoClient
 st.set_page_config(
     page_title="Aloha 2K23",
     page_icon="🎉",
-    layout="centered"
+    layout="wide"
 )
 
 uri = st.secrets['URL']
@@ -19,7 +19,7 @@ ist = pytz.timezone("Asia/Kolkata")
 st.header("Aloha 2K23 Event Dashboard")
 
 menu = st.sidebar.selectbox(
-    "Menu", ["Home", "Check In", "Add Student", "View Student", "All Data"])
+    "Menu", ["Home", "Check In", "Add Student", "View Student", "Reset Student", "All Data"])
 
 def notCheckedInCount(db):
     query = {'lastCheckIn': 'Not Checked In'}
@@ -98,6 +98,31 @@ def viewStudent(db, roll):
         return result
     else:
         return "Student :red[**not available**] in Database"
+    
+def resetStudent(db, roll):
+    digits = roll.upper().strip()
+    query = {'roll': {'$regex': f'.*{digits}$'}}
+    result = db.find_one(query)
+
+    if result is not None:
+        name = result["name"]
+        fullRoll = "23951A67"+digits
+        if result["lastCheckIn"] != "Not Checked In":
+            jsonData = {
+                '$set': {
+                    'lastCheckIn': "Not Checked In",
+                    'entryPoint': "Nil"
+                }
+            }
+            updateQuery = db.update_one(query, jsonData)
+            if updateQuery.matched_count > 0:
+                return st.success(f"**{name} - {fullRoll}** check in details have been **RESET**")
+            else:
+                return st.warning("Try Again")
+        else:
+            return st.error(f'**{name}** has not checked in yet!')
+    else:
+        return st.error("Student :red[**not available**] in Database")
 
 
 
@@ -115,7 +140,8 @@ if menu == "Check In":
     st.write("This is the Check In page.")
     roll = st.text_input("Last 2 digits of Roll Number")
     entryPoint = st.selectbox("Entry Point", ["1", "2"])
-    if roll and entryPoint and st.button("Check In"):
+    checkInBtn = st.button("Check In")
+    if roll and entryPoint and checkInBtn:
         checkInStudent(db, roll, entryPoint)
 
 
@@ -127,7 +153,8 @@ if menu == "Add Student":
     section = st.selectbox("Enter Section", ["A", "B", "C"])
     payment = st.selectbox("Enter Payment Mode", ["Online", "Cash"])
 
-    if st.button("Add Student"):
+    addStudentBtn = st.button("Add Student")
+    if addStudentBtn:
         st.warning(addStudent(db, name, roll, phone, section, payment))
 
 
@@ -135,11 +162,20 @@ if menu == "View Student":
     st.write("This is the View Student page.")
 
     roll = st.text_input("Last 2 Digits of Roll Number:")
-    if roll and st.button("View Student"):
+    viewStudentBtn = st.button("View Student")
+    if roll and viewStudentBtn:
         st.write(viewStudent(db, roll))
+
+if menu == "Reset Student":
+    st.write("This is the Reset Student page.")
+    roll = st.text_input("Last 2 digits of Roll Number")
+    resetCheckInBtn = st.button("Reset Check In")
+    if roll and resetCheckInBtn:
+        resetStudent(db, roll)
 
 if menu == "All Data":
     df = pd.DataFrame(list(db.find({})))
+    df = df.drop('_id', axis=1)
     st.dataframe(df)
 
 hide_streamlit_style = """
