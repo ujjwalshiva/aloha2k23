@@ -11,7 +11,7 @@ st.set_page_config(
     layout="centered"
 )
 
-uri = st.secrets('URL')
+uri = st.secrets['URL']
 client = MongoClient(uri)
 db = client['Aloha2K23']['DS']
 ist = pytz.timezone("Asia/Kolkata")
