@@ -16,8 +16,9 @@ client = MongoClient(uri)
 db = client['Aloha2K23']['DS']
 ist = pytz.timezone("Asia/Kolkata")
 
-st.markdown("<h1 style='text-align: center;'>Aloha 2K23 Event Dashboard</h1>",
-            unsafe_allow_html=True)
+st.image('Aloha Hero.png')
+st.markdown("<p style='text-align: center;'>This is <b>AuthIn</b> for Aloha 2K23, a standalone web app developed by the team at <a href='https://gdsciare.club'> GDSC IARE Tech </a> </p> <br>",
+                unsafe_allow_html=True)
 
 menu = st.sidebar.selectbox(
     "Menu", ["🏠 Home", "✅ Check In", "🧑🏻 Add Student", "💻 View Student", "🔄️ Reset Student", "📃 Checked In Data", "📃 Not Checked In Data", "📃 All Data"])
@@ -134,10 +135,7 @@ def resetStudent(db, roll, password):
             return st.error("Student :red[**not available**] in Database")
 
 
-if menu == "🏠 Home":
-    st.markdown("<p style='text-align: center;'>This is <b>AuthIn</b> for Aloha 2K23, a standalone web app developed by the team at <a href='https://gdsciare.club'> GDSC IARE Tech </a> </p> <br>",
-                unsafe_allow_html=True)
-    st.image('Aloha.jpg')
+if menu == "🏠 Home":    
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Students Registered", f"{totalDbCount(db)}", "Online")
     col2.metric("Checked In", f"{checkedInCount(db)}", f"{totalDbCount(db) - checkedInCount(db)}")
