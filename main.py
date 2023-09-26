@@ -16,20 +16,24 @@ client = MongoClient(uri)
 db = client['Aloha2K23']['DS']
 ist = pytz.timezone("Asia/Kolkata")
 
-st.header("Aloha 2K23 Event Dashboard")
+st.markdown("<h1 style='text-align: center;'>Aloha 2K23 Event Dashboard</h1>",
+            unsafe_allow_html=True)
 
 menu = st.sidebar.selectbox(
     "Menu", ["🏠 Home", "✅ Check In", "🧑🏻 Add Student", "💻 View Student", "🔄️ Reset Student", "📃 Checked In Data", "📃 Not Checked In Data", "📃 All Data"])
+
 
 def notCheckedInCount(db):
     query = {'lastCheckIn': 'Not Checked In'}
     count = db.count_documents(query)
     return count
 
+
 def checkedInCount(db):
-    query = {'lastCheckIn': { '$ne':'Not Checked In'}}
+    query = {'lastCheckIn': {'$ne': 'Not Checked In'}}
     count = db.count_documents(query)
     return count
+
 
 def totalDbCount(db):
     count = db.count_documents({})
@@ -40,7 +44,7 @@ def checkInStudent(db, roll, entryPoint):
     digits = roll.upper().strip()
     query = {'roll': {'$regex': f'.*{digits}$'}}
     result = db.find_one(query)
-    
+
     if result is not None:
         name = result["name"]
         fullRoll = "23951A67"+digits
@@ -60,9 +64,9 @@ def checkInStudent(db, roll, entryPoint):
             return st.error(f'**{name}** has already checked in at **{result["lastCheckIn"]}** via Entry Point **{result["entryPoint"]}**')
     else:
         return st.error("Student :red[**not available**] in Database")
-    
 
-def addStudent(db, name, roll, phone, section, payment):
+
+def addStudent(db, name, roll, phone, section, payment, password):
     fullRoll = "23951A67" + roll.strip()
     jsonData = {
         'name': name.title(),
@@ -79,13 +83,15 @@ def addStudent(db, name, roll, phone, section, payment):
         searchQuery = {'roll': {'$regex': f'.*{roll[-2:]}$'}}
         if db.find_one(searchQuery) is not None:
             return "Name already there in the database"
-
         else:
-            response = db.insert_one(jsonData)
-            if response.acknowledged:
-                return f"{name} has been added to **Database**"
+            if password != st.secrets['PASSKEY']:
+                return ":red[**🚨 Enter Valid Password**]"
             else:
-                return "Try Submitting again"
+                response = db.insert_one(jsonData)
+                if response.acknowledged:
+                    return f"{name} has been added to **Database**"
+                else:
+                    return "Try Submitting again"
     else:
         return "Fill all the details"
 
@@ -98,12 +104,13 @@ def viewStudent(db, roll):
         return result
     else:
         return "Student :red[**not available**] in Database"
-    
+
+
 def resetStudent(db, roll, password):
     digits = roll.upper().strip()
     query = {'roll': {'$regex': f'.*{digits}$'}}
     result = db.find_one(query)
-    if password not in st.secrets['PASSKEY']:
+    if password != st.secrets['PASSKEY']:
         return st.error("Enter Valid Password")
     else:
         if result is not None:
@@ -127,15 +134,15 @@ def resetStudent(db, roll, password):
             return st.error("Student :red[**not available**] in Database")
 
 
-
 if menu == "🏠 Home":
+    st.markdown("<p style='text-align: center;'>This is <b>AuthIn</b> for Aloha 2K23, a standalone web app developed by the team at <a href='https://gdsciare.club'> GDSC IARE Tech </a> </p> <br>",
+                unsafe_allow_html=True)
     st.image('Aloha.jpg')
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Students Registered", f"{totalDbCount(db)}", "Online")
-    col3.metric("Not Checked In",
-                f"{notCheckedInCount(db)}", f"{notCheckedInCount(db) - totalDbCount(db)}")
-    col2.metric("Checked In", f"{checkedInCount(db)}",
-                f"{totalDbCount(db) - checkedInCount(db)}")
+    col2.metric("Checked In", f"{checkedInCount(db)}", f"{totalDbCount(db) - checkedInCount(db)}")
+    col3.metric("Not Checked In", f"{notCheckedInCount(db)}", f"{-(totalDbCount(db)) + notCheckedInCount(db) }")
+    
 
 
 if menu == "✅ Check In":
@@ -155,9 +162,11 @@ if menu == "🧑🏻 Add Student":
     section = st.selectbox("Enter Section", ["A", "B", "C"])
     payment = st.selectbox("Enter Payment Mode", ["Online", "Cash"])
 
+    password = st.text_input(
+        ":red[Password for Authentication:]", type="password")
     addStudentBtn = st.button("Add Student")
     if addStudentBtn:
-        st.warning(addStudent(db, name, roll, phone, section, payment))
+        st.warning(addStudent(db, name, roll, phone, section, payment, password))
 
 
 if menu == "💻 View Student":
@@ -171,7 +180,8 @@ if menu == "💻 View Student":
 if menu == "🔄️ Reset Student":
     st.write("This is the Reset Student page.")
     roll = st.text_input("Last 2 digits of Roll Number")
-    password = st.text_input(":red[Password for Authentication:]",type="password")
+    password = st.text_input(
+        ":red[Password for Authentication:]", type="password")
     resetCheckInBtn = st.button("Reset Check In")
     if roll and resetCheckInBtn:
         resetStudent(db, roll, password)
