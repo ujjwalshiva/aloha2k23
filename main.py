@@ -161,7 +161,7 @@ if menu == "🧑🏻 Add Student":
     payment = st.selectbox("Enter Payment Mode", ["Online", "Cash"])
 
     password = st.text_input(
-        ":red[Password for Authentication:]", type="password")
+        ":red[Password for Authentication (Ask Sathwik):]", type="password")
     addStudentBtn = st.button("Add Student")
     if addStudentBtn:
         st.warning(addStudent(db, name, roll, phone, section, payment, password))
@@ -179,7 +179,7 @@ if menu == "🔄️ Reset Student":
     st.write("This is the Reset Student page.")
     roll = st.text_input("Last 2 digits of Roll Number")
     password = st.text_input(
-        ":red[Password for Authentication:]", type="password")
+        ":red[Password for Authentication (Ask Sathwik):]", type="password")
     resetCheckInBtn = st.button("Reset Check In")
     if roll and resetCheckInBtn:
         resetStudent(db, roll, password)
